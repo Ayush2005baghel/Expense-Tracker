@@ -1,66 +1,51 @@
-#💰 Expense Tracker – Python HTTP Server + SQLite
+# 💰 Expense Tracker (Python HTTP Server + SQLite)
 
-A lightweight and beginner-friendly Expense Tracker Web Application built using Python’s built-in HTTP server and SQLite database.
+## 📌 Project Description
 
-This project allows users to:
+Expense Tracker is a lightweight backend-based web application built using Python’s built-in HTTP server and SQLite database.  
+It allows users to manage daily expenses, track monthly salary, calculate savings, and export expense data as CSV.
 
-Add, update, and delete expenses
+This project is built without using any external frameworks like Flask or Django, making it simple and beginner-friendly.
 
-Set monthly salary
+---
 
-Track total expenses
+## 🚀 Features
 
-Calculate remaining balance
+### 🧾 Expense Management
+- Add new expenses
+- Update existing expenses
+- Delete expenses
+- View all expenses sorted by date
 
-View category-wise and monthly summaries
+### 💵 Salary Tracking
+- Set monthly salary
+- Calculate total expenses
+- View remaining balance
+- Calculate monthly savings automatically
 
-Export expenses as CSV
+### 📊 Analytics & Reports
+- Category-wise expense summary
+- Monthly expense summary
+- Top 5 categories overview
+- Monthly savings report
 
-🚀 Features
-🧾 Expense Management
+### 📁 Export Functionality
+- Export all expenses as CSV file
 
-Add new expense
+---
 
-Update existing expense
+## 🛠 Technologies Used
 
-Delete expense
+- Python 3
+- http.server (Built-in Python module)
+- SQLite (sqlite3)
+- JSON
+- CSV
+- REST API architecture
 
-View all expenses sorted by date
+No external libraries required.
 
-💵 Salary Tracking
+---
 
-Set monthly salary
+## 📂 Project Structure
 
-View total expenses
-
-View remaining balance
-
-Calculate monthly savings automatically
-
-📊 Analytics
-
-Category-wise expense summary
-
-Monthly expense summary
-
-Top 5 category summary
-
-Monthly savings report
-
-📁 Export
-
-Download all expenses as CSV file
-
-🛠 Technologies Used
-
-Python 3
-
-Built-in http.server
-
-SQLite (sqlite3)
-
-JSON
-
-CSV
-
-REST API architecture
