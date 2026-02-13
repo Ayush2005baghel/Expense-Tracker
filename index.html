@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>💰 Expense Tracker Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 30px;
+    }
+    .header h1 { font-size: 2rem; margin-bottom: 15px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.15);
+      padding: 15px;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      margin-bottom: 5px;
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .stat-positive { color: #4ade80; }
+    .stat-negative { color: #f87171; }
+    .edit-salary-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      margin-left: 10px;
+    }
+    .edit-salary-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .nav {
+      background: #f7fafc;
+      padding: 15px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .nav-btn {
+      padding: 10px 20px; border: none; border-radius: 8px;
+      background: white; color: #4a5568; cursor: pointer;
+      font-size: 0.9rem; font-weight: 500; transition: all 0.2s;
+    }
+    .nav-btn:hover { background: #e2e8f0; }
+    .nav-btn.active { background: #667eea; color: #fff; }
+
+    .content { padding: 30px; }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f7fafc; color: #2d3748; font-weight: 600; }
+
+    .category-badge {
+      padding: 4px 12px; border-radius: 12px;
+      background: #e6f2ff; color: #667eea;
+      font-size: 0.85rem; font-weight: 500;
+    }
+
+    .action-btn {
+      padding: 6px 12px; border: none; border-radius: 6px;
+      cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
+      margin-right: 5px;
+    }
+    .edit-btn { background: #3182ce; color: white; }
+    .edit-btn:hover { background: #2c5aa0; }
+    .delete-btn { background: #e53e3e; color: white; }
+    .delete-btn:hover { background: #c53030; }
+
+    .chart-container {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 30px; align-items: start; margin-bottom: 30px;
+    }
+    .chart-wrapper {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+    .chart-wrapper:hover { transform: translateY(-5px); }
+    .chart-title {
+      font-size: 1.2rem; font-weight: 600; color: #2d3748;
+      margin-bottom: 20px; text-align: center;
+    }
+    .summary-card {
+      background: #f7fafc; padding: 20px; border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    .summary-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    .summary-category { font-weight: 600; color: #2d3748; }
+    .summary-amount { font-size: 1.2rem; font-weight: 700; color: #667eea; }
+    .progress-bar {
+      height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;
+      margin-bottom: 5px;
+    }
+    .progress-fill {
+      height: 100%; background: #667eea; transition: width 0.4s ease;
+    }
+    .empty-state { text-align: center; padding: 60px 20px; color: #718096; }
+    .btn {
+      padding: 12px 24px; border: none; border-radius: 8px;
+      cursor: pointer; font-size: 1rem; font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #667eea; color: #fff; }
+    .btn-primary:hover { background: #5568d3; }
+    .btn-secondary { background: #718096; color: #fff; margin-left: 10px; }
+    .btn-secondary:hover { background: #5a6777; }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #2d3748;
+      font-weight: 500;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(5px);
+    }
+    .modal.active { display: flex; align-items: center; justify-content: center; }
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #2d3748;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .chart-container { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+
+    canvas { max-height: 400px; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💰 Expense Tracker</h1>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Monthly Salary <button class="edit-salary-btn" onclick="showSalaryModal()">✏️ Edit</button></div>
+          <div class="stat-value">₹<span id="monthlySalary">0.00</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Expenses</div>
+          <div class="stat-value">₹<span id="totalExpenses">0.00</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Remaining</div>
+          <div class="stat-value" id="remainingAmount">₹0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn active" onclick="showView('list')">📋 View All</button>
+      <button class="nav-btn" onclick="showView('add')">➕ Add</button>
+      <button class="nav-btn" onclick="showView('category')">📊 By Category</button>
+      <button class="nav-btn" onclick="showView('monthly')">📅 Monthly</button>
+      <button class="nav-btn" onclick="showView('savings')">💎 Savings</button>
+      <button class="nav-btn" onclick="exportToCSV()" style="margin-left:auto;">💾 Export CSV</button>
+    </div>
+
+    <div class="content">
+      <div id="list" class="view active">
+        <h2>All Expenses</h2>
+        <div id="expensesList"></div>
+      </div>
+
+      <div id="add" class="view">
+        <h2>Add New Expense</h2>
+        <div class="form-group"><label>Date</label><input type="date" id="expenseDate" /></div>
+        <div class="form-group"><label>Category</label><input type="text" id="expenseCategory" placeholder="e.g., Food, Rent" /></div>
+        <div class="form-group"><label>Description</label><input type="text" id="expenseDescription" /></div>
+        <div class="form-group"><label>Amount (₹)</label><input type="number" id="expenseAmount" step="0.01" /></div>
+        <button class="btn btn-primary" onclick="saveExpense()">Add Expense</button>
+      </div>
+
+      <div id="category" class="view">
+        <h2>By Category</h2>
+        <div class="chart-container">
+          <div class="chart-wrapper">
+            <div class="chart-title">Donut Chart</div>
+            <canvas id="categoryDonutChart"></canvas>
+          </div>
+          <div class="chart-wrapper">
+            <div class="chart-title">Bar Chart</div>
+            <canvas id="categoryBarChart"></canvas>
+          </div>
+        </div>
+        <div id="categorySummary"></div>
+      </div>
+
+      <div id="monthly" class="view">
+        <h2>Monthly Summary</h2>
+        <div class="chart-container">
+          <div class="chart-wrapper">
+            <div class="chart-title">Gradient Line Chart</div>
+            <canvas id="monthlyLineChart"></canvas>
+          </div>
+          <div class="chart-wrapper">
+            <div class="chart-title">Gradient Area Chart</div>
+            <canvas id="monthlyAreaChart"></canvas>
+          </div>
+        </div>
+        <div id="monthlySummary"></div>
+      </div>
+
+      <div id="savings" class="view">
+        <h2>Monthly Savings</h2>
+        <div id="savingsSummary"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Expense Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">Edit Expense</div>
+      <input type="hidden" id="editExpenseId" />
+      <div class="form-group"><label>Date</label><input type="date" id="editExpenseDate" /></div>
+      <div class="form-group"><label>Category</label><input type="text" id="editExpenseCategory" /></div>
+      <div class="form-group"><label>Description</label><input type="text" id="editExpenseDescription" /></div>
+      <div class="form-group"><label>Amount (₹)</label><input type="number" id="editExpenseAmount" step="0.01" /></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="updateExpense()">Save Changes</button>
+        <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Salary Modal -->
+  <div id="salaryModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">Set Monthly Salary</div>
+      <div class="form-group">
+        <label>Monthly Salary (₹)</label>
+        <input type="number" id="salaryInput" step="0.01" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="saveSalary()">Save</button>
+        <button class="btn btn-secondary" onclick="closeSalaryModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:5000/api';
+    let expenses = [];
+    let salaryData = {};
+    let categoryDonutChart, categoryBarChart, monthlyLineChart, monthlyAreaChart;
+
+    const chartColors = [
+      '#667eea', '#764ba2', '#f093fb', '#43e97b', '#fa709a',
+      '#fee140', '#30cfd0', '#a8edea', '#fed6e3', '#12c2e9'
+    ];
+
+    function showView(viewName) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(viewName).classList.add('active');
+      event.target.classList.add('active');
+      renderView(viewName);
+    }
+
+    async function loadExpenses() {
+      const res = await fetch(`${API_URL}/expenses`);
+      expenses = await res.json();
+      await loadSalaryData();
+      renderView('list');
+    }
+
+    async function loadSalaryData() {
+      const res = await fetch(`${API_URL}/salary`);
+      salaryData = await res.json();
+      
+      document.getElementById('monthlySalary').textContent = salaryData.salary.toFixed(2);
+      document.getElementById('totalExpenses').textContent = salaryData.total_expenses.toFixed(2);
+      
+      const remainingEl = document.getElementById('remainingAmount');
+      const remaining = salaryData.remaining;
+      remainingEl.innerHTML = `₹${Math.abs(remaining).toFixed(2)}`;
+      
+      if (remaining >= 0) {
+        remainingEl.classList.add('stat-positive');
+        remainingEl.classList.remove('stat-negative');
+      } else {
+        remainingEl.classList.add('stat-negative');
+        remainingEl.classList.remove('stat-positive');
+      }
+    }
+
+    function renderView(view) {
+      if (view === 'list') renderList();
+      if (view === 'category') renderCategoryCharts();
+      if (view === 'monthly') renderMonthlyCharts();
+      if (view === 'savings') renderSavings();
+    }
+
+    function renderList() {
+      const container = document.getElementById('expensesList');
+      if (!expenses.length) {
+        container.innerHTML = `<div class='empty-state'>No expenses yet</div>`;
+        return;
+      }
+      let html = `<table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Actions</th></tr></thead><tbody>`;
+      expenses.forEach(e => {
+        html += `<tr>
+          <td>${e.date}</td>
+          <td><span class='category-badge'>${e.category}</span></td>
+          <td>${e.description || '-'}</td>
+          <td>₹${e.amount.toFixed(2)}</td>
+          <td>
+            <button class='action-btn edit-btn' onclick='showEditModal(${JSON.stringify(e)})'>✏️ Edit</button>
+            <button class='action-btn delete-btn' onclick='deleteExpense(${e.id})'>🗑️ Delete</button>
+          </td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    async function renderCategoryCharts() {
+      const res = await fetch(`${API_URL}/summary/category/animated`);
+      const data = await res.json();
+      if (!data.length) {
+        document.getElementById('categorySummary').innerHTML =
+          "<div class='empty-state'>No data available</div>";
+        return;
+      }
+
+      const labels = data.map(d => d.category);
+      const values = data.map(d => d.total);
+      const total = values.reduce((a, b) => a + b, 0);
+      const colors = chartColors.slice(0, data.length);
+
+      if (categoryDonutChart) categoryDonutChart.destroy();
+      const ctx1 = document.getElementById('categoryDonutChart').getContext('2d');
+      categoryDonutChart = new Chart(ctx1, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#fff', borderWidth: 3, hoverOffset: 15 }] },
+        options: {
+          cutout: '70%',
+          animation: { animateScale: true, animateRotate: true },
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const pct = ((ctx.parsed / total) * 100).toFixed(1);
+                  return `${ctx.label}: ₹${ctx.parsed.toFixed(2)} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (categoryBarChart) categoryBarChart.destroy();
+      const ctx2 = document.getElementById('categoryBarChart').getContext('2d');
+      categoryBarChart = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ label: 'Amount (₹)', data: values, backgroundColor: colors, borderRadius: 8 }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { callback: v => '₹' + v } } }
+        }
+      });
+
+      const container = document.getElementById('categorySummary');
+      container.innerHTML = data.map(d => {
+        const pct = ((d.total / total) * 100).toFixed(1);
+        return `<div class='summary-card'>
+          <div class='summary-header'>
+            <span class='summary-category'>${d.category}</span>
+            <span class='summary-amount'>₹${d.total.toFixed(2)}</span>
+          </div>
+          <div class='progress-bar'><div class='progress-fill' style='width:${pct}%'></div></div>
+          <div>${pct}% of total</div>
+        </div>`;
+      }).join('');
+    }
+
+    async function renderMonthlyCharts() {
+      const res = await fetch(`${API_URL}/summary/monthly/animated`);
+      const data = await res.json();
+      if (!data.length) {
+        document.getElementById('monthlySummary').innerHTML =
+          "<div class='empty-state'>No data available</div>";
+        return;
+      }
+      const labels = data.map(d => d.month);
+      const values = data.map(d => d.total);
+
+      if (monthlyLineChart) monthlyLineChart.destroy();
+      const ctxL = document.getElementById('monthlyLineChart').getContext('2d');
+      const gradL = ctxL.createLinearGradient(0, 0, 0, 400);
+      gradL.addColorStop(0, 'rgba(102,126,234,1)');
+      gradL.addColorStop(1, 'rgba(118,75,162,0.1)');
+      monthlyLineChart = new Chart(ctxL, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Expenses', data: values, borderColor: '#667eea', backgroundColor: gradL, tension: 0.4, fill: false, pointRadius: 5 }] },
+        options: { plugins: { legend: { display: false } } }
+      });
+
+      if (monthlyAreaChart) monthlyAreaChart.destroy();
+      const ctxA = document.getElementById('monthlyAreaChart').getContext('2d');
+      const gradA = ctxA.createLinearGradient(0, 0, 0, 400);
+      gradA.addColorStop(0, 'rgba(118,75,162,0.5)');
+      gradA.addColorStop(1, 'rgba(102,126,234,0.05)');
+      monthlyAreaChart = new Chart(ctxA, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Expenses', data: values, borderColor: '#764ba2', backgroundColor: gradA, fill: true, tension: 0.4 }] },
+        options: { plugins: { legend: { display: false } } }
+      });
+
+      const container = document.getElementById('monthlySummary');
+      container.innerHTML = data.map(d =>
+        `<div class='summary-card'><div class='summary-header'>
+          <span class='summary-category'>${d.month}</span>
+          <span class='summary-amount'>₹${d.total.toFixed(2)}</span>
+        </div></div>`
+      ).join('');
+    }
+
+    function renderSavings() {
+      const container = document.getElementById('savingsSummary');
+      if (!salaryData.monthly_savings || !salaryData.monthly_savings.length) {
+        container.innerHTML = "<div class='empty-state'>No savings data available</div>";
+        return;
+      }
+      
+      container.innerHTML = salaryData.monthly_savings.map(s => {
+        const isPositive = s.savings >= 0;
+        return `<div class='summary-card'>
+          <div class='summary-header'>
+            <span class='summary-category'>${s.month}</span>
+            <span class='summary-amount' style='color: ${isPositive ? '#4ade80' : '#f87171'}'>
+              ${isPositive ? '+' : ''}₹${s.savings.toFixed(2)}
+            </span>
+          </div>
+          <div style='color: #718096; font-size: 0.9rem; margin-top: 5px;'>
+            ${isPositive ? '✅ Saved this month' : '⚠️ Overspent this month'}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function saveExpense() {
+      const date = document.getElementById('expenseDate').value;
+      const cat = document.getElementById('expenseCategory').value;
+      const desc = document.getElementById('expenseDescription').value;
+      const amt = parseFloat(document.getElementById('expenseAmount').value);
+      if (!date || !cat || !amt) return alert('Please fill required fields (Date, Category, Amount)');
+      
+      await fetch(`${API_URL}/expenses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, category: cat, description: desc, amount: amt })
+      });
+      
+      document.getElementById('expenseDate').value = '';
+      document.getElementById('expenseCategory').value = '';
+      document.getElementById('expenseDescription').value = '';
+      document.getElementById('expenseAmount').value = '';
+      
+      await loadExpenses();
+      showView('list');
+    }
+
+    function showEditModal(expense) {
+      document.getElementById('editExpenseId').value = expense.id;
+      document.getElementById('editExpenseDate').value = expense.date;
+      document.getElementById('editExpenseCategory').value = expense.category;
+      document.getElementById('editExpenseDescription').value = expense.description || '';
+      document.getElementById('editExpenseAmount').value = expense.amount;
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('active');
+    }
+
+    async function updateExpense() {
+      const id = document.getElementById('editExpenseId').value;
+      const date = document.getElementById('editExpenseDate').value;
+      const category = document.getElementById('editExpenseCategory').value;
+      const description = document.getElementById('editExpenseDescription').value;
+      const amount = parseFloat(document.getElementById('editExpenseAmount').value);
+      
+      if (!date || !category || !amount) return alert('Please fill required fields');
+      
+      await fetch(`${API_URL}/expenses/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, category, description, amount })
+      });
+      
+      closeEditModal();
+      await loadExpenses();
+    }
+
+    async function deleteExpense(id) {
+      if (!confirm('Are you sure you want to delete this expense?')) return;
+      
+      await fetch(`${API_URL}/expenses/${id}`, { method: 'DELETE' });
+      await loadExpenses();
+    }
+
+    function showSalaryModal() {
+      document.getElementById('salaryInput').value = salaryData.salary || 0;
+      document.getElementById('salaryModal').classList.add('active');
+    }
+
+    function closeSalaryModal() {
+      document.getElementById('salaryModal').classList.remove('active');
+    }
+
+    async function saveSalary() {
+      const salary = parseFloat(document.getElementById('salaryInput').value);
+      if (!salary || salary < 0) return alert('Please enter a valid salary');
+      
+      await fetch(`${API_URL}/salary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ salary })
+      });
+      
+      closeSalaryModal();
+      await loadSalaryData();
+    }
+
+    async function exportToCSV() {
+      const res = await fetch(`${API_URL}/export/csv`);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'expenses.csv';
+      a.click();
+    }
+
+    document.addEventListener('DOMContentLoaded', loadExpenses);
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('active');
+      }
+    }
+  </script>
+</body>
+</html>
