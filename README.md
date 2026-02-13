@@ -1,4 +1,4 @@
-💰 Expense Tracker – Python HTTP Server + SQLite
+#💰 Expense Tracker – Python HTTP Server + SQLite
 
 A lightweight and beginner-friendly Expense Tracker Web Application built using Python’s built-in HTTP server and SQLite database.
 
